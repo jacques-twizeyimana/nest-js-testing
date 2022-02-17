@@ -1,26 +1,49 @@
+import { NotFoundException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
-import { CreateTokenDto } from './dto/create-token.dto';
+import { Token } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 import { UpdateTokenDto } from './dto/update-token.dto';
+import { CreateTokenDto } from './dto/create-token.dto';
 
 @Injectable()
 export class TokensService {
-  create(createTokenDto: CreateTokenDto) {
-    return 'This action adds a new token';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getAll(name?: string | undefined): Promise<Token[]> {
+    if (name) {
+      return this.prisma.token.findMany({
+        where: { name },
+      });
+    }
+
+    return this.prisma.token.findMany();
   }
 
-  findAll() {
-    return `This action returns all tokens`;
+  async getOne(id: string): Promise<Token> {
+    return this.prisma.token.findUnique({
+      where: { id },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} token`;
+  async insertOne(token: CreateTokenDto): Promise<Token> {
+    return this.prisma.token.create({
+      data: token,
+    });
   }
 
-  update(id: number, updateTokenDto: UpdateTokenDto) {
-    return `This action updates a #${id} token`;
+  async updateOne(id: string, token: UpdateTokenDto): Promise<Token> {
+    return this.prisma.token.update({
+      data: token,
+      where: { id },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} token`;
+  async deleteOne(id: string): Promise<{ deleted: boolean; message?: string }> {
+    try {
+      await this.prisma.token.delete({ where: { id } });
+      return { deleted: true };
+    } catch (err) {
+      return { deleted: false, message: err.message };
+    }
   }
 }
